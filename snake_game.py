@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import time
 
 
 # Initialize Pygame
@@ -35,6 +36,14 @@ food = (400, 300)
 direction = 'right'
 
 
+# Set up the level
+level = 'Easy'
+
+
+# Set up the high score
+high_score = 0
+
+
 # Game loop
 while True:
     for event in pygame.event.get():
@@ -50,6 +59,10 @@ while True:
                 direction = 'left'
             elif event.key == pygame.K_RIGHT and direction != 'left':
                 direction = 'right'
+            elif event.key == pygame.K_e:
+                level = 'Easy'
+            elif event.key == pygame.K_h:
+                level = 'Hard'
     
     
     # Move the snake
@@ -68,6 +81,10 @@ while True:
     # Check for collision with food
     if snake[-1] == food:
         food = (random.randint(0, WIDTH - 20) // 20 * 20, random.randint(0, HEIGHT - 20) // 20 * 20)
+        if level == 'Easy':
+            high_score += 1
+        elif level == 'Hard':
+            high_score += 2
     else:
         snake.pop(0)
     
@@ -77,6 +94,8 @@ while True:
         snake[-1][1] < 0 or snake[-1][1] >= HEIGHT or
         snake[-1] in snake[:-1]):
         print('Game Over')
+        with open('highscore.txt', 'w') as file:
+            file.write(str(high_score))
         pygame.quit()
         sys.exit()
     
