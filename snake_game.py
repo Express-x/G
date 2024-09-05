@@ -1,7 +1,12 @@
 import pygame
 import random
 import sys
+import warnings
 import time
+
+
+warnings.simplefilter(action='ignore', category=RuntimeWarning)
+warnings.simplefilter(action='ignore', category=UserWarning)
 
 
 # Initialize Pygame
@@ -63,6 +68,7 @@ while True:
                 level = 'Easy'
             elif event.key == pygame.K_h:
                 level = 'Hard'
+
     
     
     # Move the snake
@@ -80,7 +86,7 @@ while True:
     
     # Check for collision with food
     if snake[-1] == food:
-        food = (random.randint(0, WIDTH - 20) // 20 * 20, random.randint(0, HEIGHT - 20) // 20 * 20)
+        food = (random.randint(0, WIDTH - 20) // 20 * 20, random.randint(0, WIDTH - 20) // 20 * 20)
         if level == 'Easy':
             high_score += 1
         elif level == 'Hard':
