@@ -33,29 +33,51 @@
             });
             const responseBody = await response.text();
             let equation = responseBody.includes("$")
-            const messageBubble = document.createElement("li");
-            messageBubble.classList.add("message-bubble");
-            messageBubble.classList.add("assistant");
-            messageBubble.innerHTML = equation ? `$${responseBody}` : responseBody
-            if(equation){
-                messageBubble.classList.add("mathjax-equation")
-            }
-            chatLog.appendChild(messageBubble);
-
             const userMessageBubble = document.createElement("li");
             userMessageBubble.classList.add("message-bubble");
             userMessageBubble.classList.add("user");
             userMessageBubble.classList.add("float-right")
+            console.log(equation)
+            userMessageBubble.innerHTML = userInput
+
+            const aiMessageBubble = document.createElement("li");
+            aiMessageBubble.classList.add("message-bubble");
+            aiMessageBubble.classList.add("assistant");
+            aiMessageBubble.classList.add("float-left")
+
+            const messageContainer = document.createElement("div");
+            messageContainer.classList.add("message-container")
+
             userMessageBubble.innerHTML = equation ? `$${userInput}` : userInput
+            aiMessageBubble.innerHTML = equation ? `$${responseBody}` : responseBody
+
             if(equation){
                 userMessageBubble.classList.add("mathjax-equation")
-            }else{
-                userMessageBubble.innerHTML = userInput
+                aiMessageBubble.classList.add("mathjax-equation")
             }
-            chatLog.appendChild(userMessageBubble);
+
+            messageContainer.appendChild(userMessageBubble)
+            const br = document.createElement("br")
+            messageContainer.appendChild(br)
+            messageContainer.appendChild(aiMessageBubble)
+
+            chatLog.appendChild(messageContainer);
 
             inputField.value = "";
         });
     </script>
+    <style>
+        .message-container {
+            display: block;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .float-left {
+            float: left;
+        }
+        .float-right {
+            float: right;
+        }
+    </style>
 </body>
 </html>
