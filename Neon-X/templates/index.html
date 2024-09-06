@@ -39,20 +39,21 @@
             messageBubble.innerHTML = equation ? `$${responseBody}` : responseBody
             if(equation){
                 messageBubble.classList.add("mathjax-equation")
-            }else{
-                const userMessageBubble = document.createElement("li");
-                userMessageBubble.classList.add("message-bubble");
-                userMessageBubble.classList.add("user");
-                userMessageBubble.classList.add("float-right")
-                userMessageBubble.innerHTML = equation ? `$${responseBody}` : responseBody
-                if(equation){
-                    userMessageBubble.classList.add("mathjax-equation")
-                }else{
-                    userMessageBubble.innerHTML = userInput
-                }
-                chatLog.appendChild(userMessageBubble);
             }
             chatLog.appendChild(messageBubble);
+
+            const userMessageBubble = document.createElement("li");
+            userMessageBubble.classList.add("message-bubble");
+            userMessageBubble.classList.add("user");
+            userMessageBubble.classList.add("float-right")
+            userMessageBubble.innerHTML = equation ? `$${userInput}` : userInput
+            if(equation){
+                userMessageBubble.classList.add("mathjax-equation")
+            }else{
+                userMessageBubble.innerHTML = userInput
+            }
+            chatLog.appendChild(userMessageBubble);
+
             inputField.value = "";
         });
     </script>
