@@ -13,9 +13,9 @@
         <div class="chat-body">
             <ul id="chat-log"></ul>
         </div>
-        <div class="input-container">
-            <input type="text" id="input-field" class="input-field" placeholder="Type a message">
-            <button id="submit-button" class="submit-button">Send</button>
+        <div class="input-container" style="position: absolute; bottom: 0; width: 100%;">
+            <input type="text" id="input-field" class="input-field" placeholder="Type a message" style="width: 90%; border-radius: 10px;">
+            <button id="submit-button" class="submit-button" style="width: 10%; border-radius: 10px;">Send</button>
         </div>
     </div>
 
@@ -32,36 +32,20 @@
                 body: `user_input=${userInput}`
             });
             const responseBody = await response.text();
-            let equation = responseBody.includes("$")
-            const userMessageBubble = document.createElement("li");
-            userMessageBubble.classList.add("message-bubble");
-            userMessageBubble.classList.add("user");
-            userMessageBubble.classList.add("float-right")
-            console.log(equation)
-            userMessageBubble.innerHTML = userInput
 
             const aiMessageBubble = document.createElement("li");
-            aiMessageBubble.classList.add("message-bubble");
-            aiMessageBubble.classList.add("assistant");
+            aiMessageBubble.classList.add("message-bubble-ai");
             aiMessageBubble.classList.add("float-left")
+            aiMessageBubble.innerHTML = responseBody;
 
-            const messageContainer = document.createElement("div");
-            messageContainer.classList.add("message-container")
+            const userMessageBubble = document.createElement("li");
+            userMessageBubble.classList.add("message-bubble-user");
+            userMessageBubble.classList.add("float-right")
 
-            userMessageBubble.innerHTML = equation ? `$${userInput}` : userInput
-            aiMessageBubble.innerHTML = equation ? `$${responseBody}` : responseBody
+            userMessageBubble.innerHTML = userInput
 
-            if(equation){
-                userMessageBubble.classList.add("mathjax-equation")
-                aiMessageBubble.classList.add("mathjax-equation")
-            }
-
-            messageContainer.appendChild(userMessageBubble)
-            const br = document.createElement("br")
-            messageContainer.appendChild(br)
-            messageContainer.appendChild(aiMessageBubble)
-
-            chatLog.appendChild(messageContainer);
+            chatLog.appendChild(aiMessageBubble)
+            chatLog.appendChild(userMessageBubble)
 
             inputField.value = "";
         });
@@ -74,9 +58,28 @@
         }
         .float-left {
             float: left;
+            border-radius: 10px;
         }
         .float-right {
             float: right;
+            border-radius: 10px;
+        }
+        .message-bubble-ai {
+          padding: 10px;
+          background-color: #666;
+          color: #fff;
+          border-radius: 10px;
+          max-width: 40%;
+          word-wrap: break-word;
+        }
+
+        .message-bubble-user {
+          padding: 10px;
+          background-color: #888;
+          color: #fff;
+          border-radius: 10px;
+          max-width: 40%;
+          word-wrap: break-word;
         }
     </style>
 </body>
