@@ -3,7 +3,7 @@ from groq import Groq
 import json
 
 
-app = Flask(__name__)
+app = Flask(__name__,template_folder='templates')
 
 # Create a Groq client with the API key
 client = Groq(api_key="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")
@@ -27,9 +27,9 @@ def generate_response(user_input):
 
 
 # Define a route for the chat interface
-@app.route("/chat", methods=["GET", "POST"])
+@app.route("/", methods=["GET", "POST"])
 
-def chat():
+def index():
     if request.method == "POST":
         # Get the user input from the form
         user_input = request.form["user_input"]
@@ -38,7 +38,7 @@ def chat():
         # Return the response as JSON
         return jsonify({"response": response})
     # Render the chat interface template
-    return render_template('chat.html')
+    return render_template('index.html')
 
 # Define a route for the model configuration interface
 @app.route("/model_config", methods=["GET", "POST"])
