@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>Neon-X Chat App</title>
-    <link rel="stylesheet" href="../src/style.css">
+    <link rel="stylesheet" href="../static/style.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" ></script>
 </head>
 <body>
     <div class="chat-container">
@@ -29,7 +30,15 @@
                 body: `user_input=${userInput}`
             });
             const responseBody = await response.text();
-            chatLog.innerHTML += `<li>${responseBody}</li>`;
+            let equation = responseBody.includes("$")
+            const messageBubble = document.createElement("li");
+            messageBubble.classList.add("message-bubble");
+            messageBubble.classList.add("assistant");
+            messageBubble.innerHTML = equation ? `$${responseBody}` : responseBody
+            if(equation){
+                messageBubble.classList.add("mathjax-equation")
+            }
+            chatLog.appendChild(messageBubble);
             inputField.value = "";
         });
     </script>
