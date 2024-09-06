@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Neon-X Chat</title>
+    <style>
+        /* Add some basic styling to the chat interface */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        #chat-container {
+            width: 80%;
+            margin: 40px auto;
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #chat-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #chat-input:focus {
+            outline: none;
+            border-color: #aaa;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        #chat-button {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #chat-button:hover {
+            background-color: #3e8e41;
+        }
+        #chat-response {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <h2>Neon-X Chat</h2>
+        <form id="chat-form">
+            <input type="text" id="chat-input" placeholder="Type your message...">
+            <button id="chat-button">Send</button>
+        </form>
+        <div id="chat-response"></div>
+    </div>
+
+    <script>
+        // Get the chat form and response elements
+        const chatForm = document.getElementById("chat-form");
+        const chatResponse = document.getElementById("chat-response");
+
+        // Add an event listener to the chat form
+        chatForm.addEventListener("submit", (e) => {
+            // Prevent the default form submission behavior
+            e.preventDefault();
+
+            // Get the user input from the chat input field
+            const userInput = document.getElementById("chat-input").value;
+
+            // Send a POST request to the chat route with the user input
+            fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ user_input: userInput }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    // Update the chat response element with the generated response
+                    chatResponse.innerHTML = `<p>${data.response}</p>`;
+                })
+                .catch((error) => console.error(error));
+        });
+    </script>
+</body>
+</html>

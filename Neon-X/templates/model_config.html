@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Model Configuration</title>
+    <style>
+        /* Add some basic styling to the model configuration interface */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        #model-config-container {
+            width: 80%;
+            margin: 40px auto;
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #model-config-form {
+            margin-top: 20px;
+        }
+        #model-config-form label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        #model-config-form input[type="text"], #model-config-form select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        #model-config-form input[type="text"]:focus, #model-config-form select:focus {
+            outline: none;
+            border-color: #aaa;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #model-config-button {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #model-config-button:hover {
+            background-color: #3e8e41;
+        }
+    </style>
+</head>
+<body>
+    <div id="model-config-container">
+        <h2>Model Configuration</h2>
+        <form id="model-config-form">
+            <label for="system-instruction">System Instruction:</label>
+            <input type="text" id="system-instruction" name="system-instruction" placeholder="Enter the system instruction">
+            <label for="model-name">Model Name:</label>
+            <input type="text" id="model-name" name="model-name" placeholder="Enter the model name">
+            <label for="api-key">API Key:</label>
+            <input type="text" id="api-key" name="api-key" placeholder="Enter the API key">
+            <button id="model-config-button">Save</button>
+        </form>
+    </div>
+
+    <script>
+        // Get the model config form and button elements
+        const modelConfigForm = document.getElementById("model-config-form");
+        const modelConfigButton = document.getElementById("model-config-button");
+
+        // Add an event listener to the model config button
+        modelConfigButton.addEventListener("click", (e) => {
+            // Prevent the default button click behavior
+            e.preventDefault();
+
+            // Get the user input from the model config form
+            const systemInstruction = document.getElementById("system-instruction").value;
+            const modelName = document.getElementById("model-name").value;
+            const apiKey = document.getElementById("api-key").value;
+
+            // Send a POST request to the chat route with the model config
+            fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    system_instruction: systemInstruction,
+                    model_name: modelName,
+                    api_key: apiKey
+                }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    // Update the chat response element with the generated response
+                    //console.log(data);
+                })
+                .catch((error) => console.error(error));
+        });
+    </script>
+</body>
+</html>
