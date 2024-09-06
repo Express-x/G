@@ -17,9 +17,9 @@ def generate_response(user_input):
             {"role":"system","content": "You are a smart coder assistant"},
             {"role": "user", "content": user_input}
         ],
-        model="llama-3.1-70b-versatile",
+        model="llama3-8b-8192",
         temperature=0.5,
-        max_tokens=8100,
+        max_tokens=1024,
         top_p=1
     )
     # Return the generated response
@@ -38,7 +38,7 @@ def chat():
         # Return the response as JSON
         return jsonify({"response": response})
     # Render the chat interface template
-    return render_template("chat.html")
+    return render_template('chat.html')
 
 # Define a route for the model configuration interface
 @app.route("/model_config", methods=["GET", "POST"])
@@ -59,7 +59,7 @@ def model_config():
         # Return a success message
         return "Model configuration saved successfully"
     # Render the model configuration interface template
-    return render_template("model_config.html")
+    return render_template('model_config.html')
 
 
 # Run the Flask app
