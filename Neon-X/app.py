@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request
 from groq import Groq
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 
 client = Groq(api_key="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")
 
