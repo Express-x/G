@@ -12,6 +12,8 @@
         </div>
         <div class="chat-body">
             <ul id="chat-log"></ul>
+        </div>
+        <div class="input-container">
             <input type="text" id="input-field" class="input-field" placeholder="Type a message">
             <button id="submit-button" class="submit-button">Send</button>
         </div>
@@ -37,6 +39,18 @@
             messageBubble.innerHTML = equation ? `$${responseBody}` : responseBody
             if(equation){
                 messageBubble.classList.add("mathjax-equation")
+            }else{
+                const userMessageBubble = document.createElement("li");
+                userMessageBubble.classList.add("message-bubble");
+                userMessageBubble.classList.add("user");
+                userMessageBubble.classList.add("float-right")
+                userMessageBubble.innerHTML = equation ? `$${responseBody}` : responseBody
+                if(equation){
+                    userMessageBubble.classList.add("mathjax-equation")
+                }else{
+                    userMessageBubble.innerHTML = userInput
+                }
+                chatLog.appendChild(userMessageBubble);
             }
             chatLog.appendChild(messageBubble);
             inputField.value = "";
