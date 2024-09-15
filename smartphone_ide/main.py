@@ -83,41 +83,10 @@ class SmartphoneIDE:
         self.notebook = ttk.Notebook(master)
         self.notebook.pack(fill=tk.BOTH, expand=True)
 
-        # Create a frame for the line numbers and text area
-        editor_frame = tk.Frame(self.notebook)
-        editor_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Add line numbers
-        self.line_numbers = tk.Text(editor_frame, width=4, bg="lightgrey", state="disabled")
-        self.line_numbers.pack(side="left", fill="y")
-
-        # Add text area for code editing
-        self.text_area = tk.Text(editor_frame, wrap=tk.WORD)
-        self.text_area.pack(side="right", fill="both", expand=True)
-
-        self.notebook.add(editor_frame, text="Code")
-
-        # Add a console for output
-        self.console = tk.Text(self.notebook, wrap=tk.WORD, bg="black", fg="white")
-        self.notebook.add(self.console, text="Console")
-
         self.font = font.Font(family="Courier New", size=12)
-        self.text_area.configure(font=self.font)
-        self.console.configure(font=self.font)
 
-        self.autocomplete = Autocomplete(self.text_area)
-
-        self.create_menu()
-
-        # Bind events for smart indentation
-        self.text_area.bind("<Return>", self.smart_indent)
-        self.text_area.bind("<KeyPress-{>", self.handle_open_bracket)  # Bind to '<KeyPress-{>'
-        self.text_area.bind("<KeyPress-[>", self.handle_open_bracket)  # Bind to '<KeyPress-[>'
-        self.text_area.bind("<KeyPress-(>", self.handle_open_bracket)  # Bind to '<KeyPress-(>'
-        self.text_area.bind("<BackSpace>", self.handle_backspace)
-
-        self.update_line_numbers()
-        self.text_area.bind("<KeyRelease>", self.update_line_numbers)
+        # Create initial tab for new files
+        self.new_file()
 
     def create_menu(self):
         menubar = tk.Menu(self.master)
@@ -160,52 +129,93 @@ class SmartphoneIDE:
         menubar.add_cascade(label="Theme", menu=thememenu)
 
     def new_file(self):
-        self.text_area.delete("1.0", tk.END)
-        self.update_line_numbers()
+        # Create a frame for the line numbers and text area
+        editor_frame = tk.Frame(self.notebook)
+        editor_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Add line numbers
+        line_numbers = tk.Text(editor_frame, width=4, bg="lightgrey", state="disabled")
+        line_numbers.pack(side="left", fill="y")
+
+        # Add text area for code editing
+        text_area = tk.Text(editor_frame, wrap=tk.WORD)
+        text_area.pack(side="right", fill="both", expand=True)
+
+        text_area.configure(font=self.font)
+
+        self.notebook.add(editor_frame, text="Untitled")
+        self.notebook.select(editor_frame)
+
+        # Initialize autocomplete for the new text area
+        Autocomplete(text_area)
+
+        # Bind events for smart indentation and line numbers
+        text_area.bind("<Return>", self.smart_indent)
+        text_area.bind("<KeyPress-{>", self.handle_open_bracket)
+        text_area.bind("<KeyPress-[>", self.handle_open_bracket)
+        text_area.bind("<KeyPress-(>", self.handle_open_bracket)
+        text_area.bind("<BackSpace>", self.handle_backspace)
+        text_area.bind("<KeyRelease>", lambda event, ln=line_numbers, ta=text_area: self.update_line_numbers(ln, ta))
+
+        # Store references to the text area and line numbers for this tab
+        editor_frame.text_area = text_area
+        editor_frame.line_numbers = line_numbers
 
     def open_file(self):
         file_path = filedialog.askopenfilename()
         if file_path:
             try:
                 with open(file_path, "r") as f:
-                    self.text_area.delete("1.0", tk.END)
-                    self.text_area.insert(tk.END, f.read())
-                self.update_line_numbers()
+                    # Create a new tab for the opened file
+                    self.new_file()
+                    self.notebook.tab(self.notebook.select(), text=os.path.basename(file_path))
+                    self.notebook.select(self.notebook.select())
+                    self.notebook.index(self.notebook.select())
+                    editor_frame = self.notebook.nametowidget(self.notebook.select())
+                    editor_frame.text_area.insert(tk.END, f.read())
+                    editor_frame.file_path = file_path  # Store the file path with the tab
             except:
                 messagebox.showerror("Error", "Could not open file.")
 
     def save_file(self):
-        if hasattr(self, "file_path") and self.file_path:
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
+        if hasattr(editor_frame, "file_path") and editor_frame.file_path:
             try:
-                with open(self.file_path, "w") as f:
-                    f.write(self.text_area.get("1.0", tk.END))
+                with open(editor_frame.file_path, "w") as f:
+                    f.write(editor_frame.text_area.get("1.0", tk.END))
             except:
                 messagebox.showerror("Error", "Could not save file.")
         else:
             self.save_as_file()
 
     def save_as_file(self):
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
         file_path = filedialog.asksaveasfilename(defaultextension=".py")
         if file_path:
             try:
                 with open(file_path, "w") as f:
-                    f.write(self.text_area.get("1.0", tk.END))
-                self.file_path = file_path
+                    f.write(editor_frame.text_area.get("1.0", tk.END))
+                editor_frame.file_path = file_path
+                self.notebook.tab(self.notebook.select(), text=os.path.basename(file_path))
             except:
                 messagebox.showerror("Error", "Could not save file.")
 
     def cut(self):
-        self.text_area.event_generate("<<Cut>>")
-        self.update_line_numbers()
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
+        editor_frame.text_area.event_generate("<<Cut>>")
+        self.update_line_numbers(editor_frame.line_numbers, editor_frame.text_area)
 
     def copy(self):
-        self.text_area.event_generate("<<Copy>>")
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
+        editor_frame.text_area.event_generate("<<Copy>>")
 
     def paste(self):
-        self.text_area.event_generate("<<Paste>>")
-        self.update_line_numbers()
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
+        editor_frame.text_area.event_generate("<<Paste>>")
+        self.update_line_numbers(editor_frame.line_numbers, editor_frame.text_area)
 
     def find(self):
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
         self.find_window = tk.Toplevel(self.master)
         self.find_window.title("Find")
 
@@ -213,9 +223,10 @@ class SmartphoneIDE:
         self.find_entry = tk.Entry(self.find_window)
         self.find_entry.grid(row=0, column=1)
 
-        tk.Button(self.find_window, text="Find", command=self.find_text).grid(row=1, column=1)
+        tk.Button(self.find_window, text="Find", command=lambda: self.find_text(editor_frame.text_area)).grid(row=1, column=1)
 
     def replace(self):
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
         self.replace_window = tk.Toplevel(self.master)
         self.replace_window.title("Replace")
 
@@ -227,74 +238,76 @@ class SmartphoneIDE:
         self.replace_entry = tk.Entry(self.replace_window)
         self.replace_entry.grid(row=1, column=1)
 
-        tk.Button(self.replace_window, text="Replace", command=self.replace_text).grid(row=2, column=1)
+        tk.Button(self.replace_window, text="Replace", command=lambda: self.replace_text(editor_frame.text_area)).grid(row=2, column=1)
 
-    def find_text(self):
+    def find_text(self, text_area):
         text_to_find = self.find_entry.get()
         if text_to_find:
-            start = self.text_area.search(text_to_find, "1.0", tk.END)
+            start = text_area.search(text_to_find, "1.0", tk.END)
             if start:
                 end = f"{start}+{len(text_to_find)}c"
-                self.text_area.tag_add("highlight", start, end)
-                self.text_area.tag_config("highlight", background="yellow")
-                self.text_area.see(start)
+                text_area.tag_add("highlight", start, end)
+                text_area.tag_config("highlight", background="yellow")
+                text_area.see(start)
 
-    def replace_text(self):
+    def replace_text(self, text_area):
         text_to_find = self.replace_find_entry.get()
         text_to_replace = self.replace_entry.get()
         if text_to_find:
-            start = self.text_area.search(text_to_find, "1.0", tk.END)
+            start = text_area.search(text_to_find, "1.0", tk.END)
             if start:
                 end = f"{start}+{len(text_to_find)}c"
-                self.text_area.delete(start, end)
-                self.text_area.insert(start, text_to_replace)
+                text_area.delete(start, end)
+                text_area.insert(start, text_to_replace)
 
     def indent_selection(self):
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
         try:
-            selected_text = self.text_area.get(tk.SEL_FIRST, tk.SEL_LAST)
+            selected_text = editor_frame.text_area.get(tk.SEL_FIRST, tk.SEL_LAST)
             lines = selected_text.splitlines()
             indented_lines = ["    " + line for line in lines]
-            self.text_area.delete(tk.SEL_FIRST, tk.SEL_LAST)
-            self.text_area.insert(tk.SEL_FIRST, "\\\\
-".join(indented_lines))
-            self.update_line_numbers()
+            editor_frame.text_area.delete(tk.SEL_FIRST, tk.SEL_LAST)
+            editor_frame.text_area.insert(tk.SEL_FIRST, "\\\\.join(indented_lines))
+            self.update_line_numbers(editor_frame.line_numbers, editor_frame.text_area)
         except tk.TclError:
             pass  # No selection
 
     def unindent_selection(self):
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
         try:
-            selected_text = self.text_area.get(tk.SEL_FIRST, tk.SEL_LAST)
+            selected_text = editor_frame.text_area.get(tk.SEL_FIRST, tk.SEL_LAST)
             lines = selected_text.splitlines()
             unindented_lines = [line[4:] if line.startswith("    ") else line for line in lines]
-            self.text_area.delete(tk.SEL_FIRST, tk.SEL_LAST)
-            self.text_area.insert(tk.SEL_FIRST, "\\\\
-".join(unindented_lines))
-            self.update_line_numbers()
+            editor_frame.text_area.delete(tk.SEL_FIRST, tk.SEL_LAST)
+            editor_frame.text_area.insert(tk.SEL_FIRST, "\\\\".join(unindented_lines))
+            self.update_line_numbers(editor_frame.line_numbers, editor_frame.text_area)
         except tk.TclError:
             pass  # No selection
 
     def comment_uncomment(self):
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
         try:
-            selected_text = self.text_area.get(tk.SEL_FIRST, tk.SEL_LAST)
+            selected_text = editor_frame.text_area.get(tk.SEL_FIRST, tk.SEL_LAST)
             lines = selected_text.splitlines()
 
             if all(line.startswith("# ") for line in lines):  # Uncomment
                 uncommented_lines = [line[2:] for line in lines]
-                self.text_area.delete(tk.SEL_FIRST, tk.SEL_LAST)
-                self.text_area.insert(tk.SEL_FIRST, "\\\\
+                editor_frame.text_area.delete(tk.SEL_FIRST, tk.SEL_LAST)
+                editor_frame.text_area.insert(tk.SEL_FIRST, "\\\\
 ".join(uncommented_lines))
             else:  # Comment
                 commented_lines = ["# " + line for line in lines]
-                self.text_area.delete(tk.SEL_FIRST, tk.SEL_LAST)
-                self.text_area.insert(tk.SEL_FIRST, "\\\\
+                editor_frame.text_area.delete(tk.SEL_FIRST, tk.SEL_LAST)
+                editor_frame.text_area.insert(tk.SEL_FIRST, "\\\\
 ".join(commented_lines))
-            self.update_line_numbers()
+            self.update_line_numbers(editor_frame.line_numbers, editor_frame.text_area)
         except tk.TclError:
             pass  # No selection
 
     def run_code(self):
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
         self.console.delete("1.0", tk.END)  # Clear console before running
-        code = self.text_area.get("1.0", tk.END)
+        code = editor_frame.text_area.get("1.0", tk.END)
         try:
             # Redirect stdout to console
             import sys
@@ -311,28 +324,31 @@ class SmartphoneIDE:
         self.console.see(tk.END)  # Scroll to the end
 
     def increase_font_size(self):
-        current_size = self.font.cget("size")
-        self.font.configure(size=current_size + 2)
-        self.update_line_numbers()
+        self.font.configure(size=self.font.cget("size") + 2)
+        self.update_line_numbers(self.line_numbers, self.text_area)
 
     def decrease_font_size(self):
         current_size = self.font.cget("size")
         if current_size > 2:
             self.font.configure(size=current_size - 2)
-        self.update_line_numbers()
+            self.update_line_numbers(self.line_numbers, self.text_area)
 
     def change_theme(self, theme):
-        if theme == "light":
-            self.text_area.config(bg="white", fg="black", insertbackground="black")
-            self.console.config(bg="white", fg="black", insertbackground="black")
-            self.line_numbers.config(bg="lightgrey", fg="black")
-        elif theme == "dark":
-            self.text_area.config(bg="#272822", fg="#f8f8f2", insertbackground="white")
-            self.console.config(bg="black", fg="white", insertbackground="white")
-            self.line_numbers.config(bg="#272822", fg="#f8f8f2")
+        for tab_id in self.notebook.tabs():
+            editor_frame = self.notebook.nametowidget(tab_id)
+            if theme == "light":
+                editor_frame.text_area.config(bg="white", fg="black", insertbackground="black")
+                self.console.config(bg="white", fg="black", insertbackground="black")
+                editor_frame.line_numbers.config(bg="lightgrey", fg="black")
+            elif theme == "dark":
+                editor_frame.text_area.config(bg="#272822", fg="#f8f8f2", insertbackground="white")
+                self.console.config(bg="black", fg="white", insertbackground="white")
+                editor_frame.line_numbers.config(bg="#272822", fg="#f8f8f2")
 
     def smart_indent(self, event):
-        current_line = self.text_area.get("insert linestart", "insert lineend")
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
+        text_area = editor_frame.text_area
+        current_line = text_area.get("insert linestart", "insert lineend")
         current_indent = len(current_line) - len(current_line.lstrip())
 
         if current_line.rstrip().endswith(":"):
@@ -341,22 +357,24 @@ class SmartphoneIDE:
             new_indent = current_indent - 4
         else:
             # Check previous line for indentation context
-            previous_line = self.text_area.get("insert -1l linestart", "insert -1l lineend")
+            previous_line = text_area.get("insert -1l linestart", "insert -1l lineend")
             if previous_line.rstrip().endswith(":"):
                 new_indent = current_indent + 4
             else:
                 new_indent = current_indent
 
-        self.text_area.insert("insert", "\\
+        text_area.insert("insert", "\\\\
 " + " " * new_indent)
-        self.update_line_numbers()
+        self.update_line_numbers(editor_frame.line_numbers, text_area)
         return "break"  # Prevent default newline behavior
 
     def handle_open_bracket(self, event):
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
+        text_area = editor_frame.text_area
         if event.char in ['{', '[', '(']:
-            self.text_area.insert("insert", event.char)
-            self.text_area.insert("insert", self.get_closing_bracket(event.char))
-            self.text_area.mark_set("insert", "insert-1c")
+            text_area.insert("insert", event.char)
+            text_area.insert("insert", self.get_closing_bracket(event.char))
+            text_area.mark_set("insert", "insert-1c")
 
     def get_closing_bracket(self, open_bracket):
         if open_bracket == '{':
@@ -369,17 +387,19 @@ class SmartphoneIDE:
             return ''
 
     def handle_backspace(self, event):
-        if self.text_area.get("insert-1c") == self.text_area.get("insert") and self.text_area.get("insert") in ["}", "]", ")"]:
-            self.text_area.delete("insert-1c")
+        editor_frame = self.notebook.nametowidget(self.notebook.select())
+        text_area = editor_frame.text_area
+        if text_area.get("insert-1c") == text_area.get("insert") and text_area.get("insert") in ["}", "]", ")"]:
+            text_area.delete("insert-1c")
 
-    def update_line_numbers(self, event=None):
-        self.line_numbers.config(state="normal")
-        self.line_numbers.delete("1.0", tk.END)
-        line_count = int(self.text_area.index("end-1c").split('.')[0])
+    def update_line_numbers(self, line_numbers, text_area, event=None):
+        line_numbers.config(state="normal")
+        line_numbers.delete("1.0", tk.END)
+        line_count = int(text_area.index("end-1c").split('.')[0])
         for i in range(1, line_count + 1):
-            self.line_numbers.insert(tk.END, f"{i}
+            line_numbers.insert(tk.END, f"{i}\\\\
 ")
-        self.line_numbers.config(state="disabled")
+        line_numbers.config(state="disabled")
 
 
 root = tk.Tk()
