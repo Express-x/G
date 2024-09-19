@@ -139,4 +139,120 @@ def time_step_gradient_descent(model, X, y, learning_rate=0.01, epochs=100, time
             loss = model.loss(y_pred, y)
             print(f"Epoch: {epoch}, Loss: {loss}")
 
-from layers import BatchNorm  # Import BatchNorm from layers.py
+from layers import BatchNorm
+
+# Attention Mechanisms
+
+class SelfAttention(Layer):
+    def __init__(self, input_dim, dk, dv):
+        super().__init__()
+        self.dk = dk
+        self.dv = dv
+
+        self.Wq = self._init_weights((input_dim, dk))
+        self.Wk = self._init_weights((input_dim, dk))
+        self.Wv = self._init_weights((input_dim, dv))
+
+    def _init_weights(self, shape):
+        return np.random.randn(*shape) * 0.01
+
+    def __call__(self, queries, keys, values):
+        if GPU_AVAILABLE:
+            queries, keys, values = cp.asarray(queries), cp.asarray(keys), cp.asarray(values)
+            Q = cp.dot(queries, self.Wq)
+            K = cp.dot(keys, self.Wk)
+            V = cp.dot(values, self.Wv)
+
+            scaled_attention = cp.matmul(Q, K.transpose(0, 2, 1)) / cp.sqrt(self.dk)
+            attention_weights = cp.exp(scaled_attention) / cp.sum(cp.exp(scaled_attention), axis=-1, keepdims=True)
+            output = cp.matmul(attention_weights, V)
+            return cp.asnumpy(output)
+        else:
+            Q = np.dot(queries, self.Wq)
+            K = np.dot(keys, self.Wk)
+            V = np.dot(values, self.Wv)
+
+            scaled_attention = np.matmul(Q, K.transpose(0, 2, 1)) / np.sqrt(self.dk)
+            attention_weights = np.exp(scaled_attention) / np.sum(np.exp(scaled_attention), axis=-1, keepdims=True)
+            output = np.matmul(attention_weights, V)
+            return output
+
+
+class MultiHeadAttention(Layer):
+    def __init__(self, input_dim, dk, dv, num_heads):
+        super().__init__()
+        self.dk = dk
+        self.dv = dv
+        self.num_heads = num_heads
+        self.heads = [SelfAttention(input_dim, dk, dv) for _ in range(num_heads)]
+        self.Wo = self._init_weights((num_heads * dv, input_dim))
+
+    def _init_weights(self, shape):
+        return np.random.randn(*shape) * 0.01
+
+    def __call__(self, queries, keys, values):
+        head_outputs = [head(queries, keys, values) for head in self.heads]
+        concatenated_output = np.concatenate(head_outputs, axis=-1)
+        if GPU_AVAILABLE:
+            concatenated_output = cp.asarray(concatenated_output)
+            output = cp.dot(concatenated_output, self.Wo)
+            return cp.asnumpy(output)
+        else:
+            output = np.dot(concatenated_output, self.Wo)
+            return output
+
+
+class LinearAttention(Layer):
+    def __init__(self, input_dim, dk):
+        super().__init__()
+        self.dk = dk
+        self.Wq = self._init_weights((input_dim, dk))
+        self.Wk = self._init_weights((input_dim, dk))
+        self.Wv = self._init_weights((input_dim, dk))
+
+    def _init_weights(self, shape):
+        return np.random.randn(*shape) * 0.01
+
+    def __call__(self, queries, keys, values):
+        if GPU_AVAILABLE:
+            queries, keys, values = cp.asarray(queries), cp.asarray(keys), cp.asarray(values)
+            Q = cp.dot(queries, self.Wq)
+            K = cp.dot(keys, self.Wk)
+            V = cp.dot(values, self.Wv)
+
+            scaled_attention = cp.matmul(Q, K.transpose(0, 2, 1)) / cp.sqrt(self.dk)
+            attention_weights = cp.exp(scaled_attention - cp.max(scaled_attention, axis=-1, keepdims=True))
+            attention_weights /= cp.sum(attention_weights, axis=-1, keepdims=True)
+            output = cp.matmul(attention_weights, V)
+            return cp.asnumpy(output)
+        else:
+            Q = np.dot(queries, self.Wq)
+            K = np.dot(keys, self.Wk)
+            V = np.dot(values, self.Wv)
+
+            scaled_attention = np.matmul(Q, K.transpose(0, 2, 1)) / np.sqrt(self.dk)
+            attention_weights = np.exp(scaled_attention - np.max(scaled_attention, axis=-1, keepdims=True))
+            attention_weights /= np.sum(attention_weights, axis=-1, keepdims=True)
+            output = np.matmul(attention_weights, V)
+            return output
+
+
+class HierarchicalAttention(Layer):
+    def __init__(self, input_dim, dk, dv, num_heads, hierarchy_levels):
+        super().__init__()
+        self.hierarchy_levels = hierarchy_levels
+        self.multi_head_attention_layers = [
+            MultiHeadAttention(input_dim, dk, dv, num_heads) for _ in range(hierarchy_levels)
+        ]
+
+    def __call__(self, queries, keys, values):
+        for i in range(self.hierarchy_levels):
+            if GPU_AVAILABLE:
+                queries, keys, values = cp.asarray(queries), cp.asarray(keys), cp.asarray(values)
+                attention_output = self.multi_head_attention_layers[i](queries, keys, values)
+                queries = keys = values = attention_output  # Update queries, keys, values for the next level
+                queries, keys, values = cp.asnumpy(queries), cp.asnumpy(keys), cp.asnumpy(values)
+            else:
+                attention_output = self.multi_head_attention_layers[i](queries, keys, values)
+                queries = keys = values = attention_output  # Update queries, keys, values for the next level
+        return attention_output
