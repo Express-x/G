@@ -1,0 +1,22 @@
+This is a sample dataset for training the AI model.
+It contains several sentences with different structures.
+The model should be able to learn the patterns and predict the next word in a sequence.
+This is another sentence in the dataset.
+We can add more sentences to improve the model's performance.
+The more data we have, the better the model will be.
+Let's try adding some more complex sentences.
+For example, we can include sentences with different tenses and grammatical structures.
+We can also add sentences with different lengths.
+The variety of sentences will help the model learn better.
+This is a longer sentence with more words.
+It should be a good challenge for the model to learn from.
+We can also add sentences with different topics.
+For example, we can add sentences about science, history, or literature.
+The diversity of topics will make the model more versatile.
+This is a sentence about science.
+It talks about the importance of research.
+This is a sentence about history.
+It mentions a significant event from the past.
+This is a sentence about literature.
+It discusses a famous novel.
+By adding more sentences like these, we can improve the model's accuracy and make it more useful.
