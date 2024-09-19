@@ -139,7 +139,7 @@ def time_step_gradient_descent(model, X, y, learning_rate=0.01, epochs=100, time
             loss = model.loss(y_pred, y)
             print(f"Epoch: {epoch}, Loss: {loss}")
 
-from layers import BatchNorm
+from future_model.layers import BatchNorm
 
 # Attention Mechanisms
 
