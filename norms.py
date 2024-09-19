@@ -1,5 +1,13 @@
 import numpy as np
 
+try:
+    import cupy as cp
+    GPU_AVAILABLE = True
+    print("CUDA/GPU is available. Using CuPy for computations.")
+except ImportError:
+    GPU_AVAILABLE = False
+    print("CUDA/GPU is not available. Using NumPy for computations.")
+
 class LayerNorm:
     def __init__(self, normalized_shape, eps=1e-5, elementwise_affine=True):
         if isinstance(normalized_shape, int):
@@ -12,12 +20,21 @@ class LayerNorm:
             self.bias = np.zeros(normalized_shape)
 
     def __call__(self, x):
-        mean = np.mean(x, axis=-1, keepdims=True)
-        var = np.var(x, axis=-1, keepdims=True)
-        out = (x - mean) / np.sqrt(var + self.eps)
-        if self.elementwise_affine:
-            out = out * self.weight + self.bias
-        return out
+        if GPU_AVAILABLE:
+            x = cp.asarray(x)  # Move data to GPU
+            mean = cp.mean(x, axis=-1, keepdims=True)
+            var = cp.var(x, axis=-1, keepdims=True)
+            out = (x - mean) / cp.sqrt(var + self.eps)
+            if self.elementwise_affine:
+                out = out * self.weight + self.bias
+            return cp.asnumpy(out)  # Move result back to CPU
+        else:
+            mean = np.mean(x, axis=-1, keepdims=True)
+            var = np.var(x, axis=-1, keepdims=True)
+            out = (x - mean) / np.sqrt(var + self.eps)
+            if self.elementwise_affine:
+                out = out * self.weight + self.bias
+            return out
 
 
 class AttentionNorm:
@@ -27,12 +44,20 @@ class AttentionNorm:
         self.weight = np.ones(dim)
 
     def __call__(self, x):
-        # x: [batch_size, seq_len, dim]
-        mean = np.mean(x, axis=1, keepdims=True)  # [batch_size, 1, dim]
-        var = np.var(x, axis=1, keepdims=True)  # [batch_size, 1, dim]
-        out = (x - mean) / np.sqrt(var + self.eps)  # [batch_size, seq_len, dim]
-        out = out * self.weight  # [batch_size, seq_len, dim]
-        return out
+        if GPU_AVAILABLE:
+            x = cp.asarray(x)
+            mean = cp.mean(x, axis=1, keepdims=True)
+            var = cp.var(x, axis=1, keepdims=True)
+            out = (x - mean) / cp.sqrt(var + self.eps)
+            out = out * self.weight
+            return cp.asnumpy(out)
+        else:
+            # x: [batch_size, seq_len, dim]
+            mean = np.mean(x, axis=1, keepdims=True)  # [batch_size, 1, dim]
+            var = np.var(x, axis=1, keepdims=True)  # [batch_size, 1, dim]
+            out = (x - mean) / np.sqrt(var + self.eps)  # [batch_size, seq_len, dim]
+            out = out * self.weight  # [batch_size, seq_len, dim]
+            return out
 
 
 def r1_loss(real_pred, real_img):
@@ -113,3 +138,5 @@ def time_step_gradient_descent(model, X, y, learning_rate=0.01, epochs=100, time
             y_pred = model.forward(X)
             loss = model.loss(y_pred, y)
             print(f"Epoch: {epoch}, Loss: {loss}")
+
+from layers import BatchNorm  # Import BatchNorm from layers.py
