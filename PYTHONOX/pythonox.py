@@ -24,11 +24,12 @@ def run_script():
         if error:
             console.insert(tk.END, error)
             # Error highlighting (basic example)
-            error_match = re.search(r'File "(.*?)"', error)
-            if error_match:
-                line_number = int(re.search(r"line (\\\\d+)", error).group(1))
+            try:
+                line_number = int(re.search(r"line (\\\\\\\\d+)", error).group(1))
                 editor.tag_add("error", f"{line_number}.0", f"{line_number}.end")
                 editor.tag_configure("error", background="lightcoral")
+            except:
+                pass # Handle cases where line number cannot be extracted
         console.config(state="disabled")
     except Exception as e:
         console.config(state="normal")
@@ -96,7 +97,7 @@ def find_replace():
         find()
         text = find_entry.get()
         replace_text = replace_entry.get()
-        editor.tag_remove("found", "1.0", tk.END)
+        editor.tag_remove("found", "1.0", tk.END) #remove previous highlight
         start_index = "1.0"
         while True:
             index = editor.search(text, start_index, tk.END)
@@ -105,10 +106,9 @@ def find_replace():
             editor.replace(index, f"{index}+{len(text)}c", replace_text)
             start_index = f"{index}+{len(replace_text)}c"
     def replace_all():
-        find()
         text = find_entry.get()
         replace_text = replace_entry.get()
-        editor.tag_remove("found", "1.0", tk.END)
+        editor.tag_remove("found", "1.0", tk.END) #remove highlight
         start_index = "1.0"
         while True:
             index = editor.search(text, start_index, tk.END)
@@ -160,13 +160,21 @@ menubar.add_cascade(label="View", menu=viewmenu)
 
 root.config(menu=menubar)
 
+#Notebook Implementation
+notebook = ttk.Notebook(root)
+notebook.pack(expand=True, fill="both")
+
 # Text Editor
-editor = scrolledtext.ScrolledText(root, font=("Courier", 14), wrap=tk.WORD)
-editor.pack(expand=True, fill="both")
+editor = scrolledtext.ScrolledText(notebook, font=("Courier", 14), wrap=tk.WORD)
 
 # Output Console
-console = scrolledtext.ScrolledText(root, state="disabled", font=("Courier", 12), bg="lightgray", wrap=tk.WORD)
-console.pack(expand=True, fill="both")
+console = scrolledtext.ScrolledText(notebook, state="disabled", font=("Courier", 12), bg="lightgray", wrap=tk.WORD)
+
+#Placement of editor and console inside notebook
+editor_frame = tk.Frame(notebook)
+editor.window_create("end", window=editor)
+console_frame = tk.Frame(notebook)
+console.window_create("end", window=console)
 
 # Status Bar
 status_bar = tk.Label(root, text="Line: 1, Column: 1", bd=1, relief=tk.SUNKEN, anchor=tk.W)
@@ -178,24 +186,28 @@ editor.tag_configure("comment", foreground="green", font=("Courier", 14, "italic
 editor.tag_configure("string", foreground="red")
 editor.tag_configure("number", foreground="purple")
 
-keywords = {r"(if|elif|else|for|while|def|class|return|import|print|True|False|None)": "keyword",
+keywords = {r"\\\\\\\\b(if|elif|else|for|while|def|class|return|import|print|True|False|None)\\\\\\\\b": "keyword",
             r"#.*": "comment",
-            r'".*?"': "string",
-            r"\\\\d+\\\\.?\\\\d*": "number"}  # Add more keywords and patterns as needed
+            r'[\\"\\\\\\\\'](.*?)[\\"\\\\\\\\']': "string",
+            r"\\\\\\\\b\\\\\\\\d+\\\\\\\\b": "number"}  # Add more keywords and patterns as needed
+
 
 def highlight_syntax(event=None):
     editor.tag_remove("keyword", "1.0", tk.END)
     editor.tag_remove("comment", "1.0", tk.END)
     editor.tag_remove("string", "1.0", tk.END)
     editor.tag_remove("number", "1.0", tk.END)
+    code = editor.get("1.0", "end-1c")
     for pattern, tag in keywords.items():
-        for match in re.finditer(pattern, editor.get("1.0", tk.END)):
-            editor.tag_add(tag, f"{match.start()+1}.0", f"{match.end()+1}.0")
+        for match in re.finditer(pattern, code):
+            start = "1.0 +" + str(match.start()) + "c"
+            end = "1.0 +" + str(match.end()) + "c"
+            editor.tag_add(tag, start, end)
+
 editor.bind("<KeyRelease>", highlight_syntax)
 
 # Line Numbers
 line_numbers = tk.Canvas(root, width=30, bg="lightgray")
-line_numbers.pack(side=tk.LEFT, fill=tk.Y)
 
 def update_line_numbers(event=None):
     line_numbers.delete("all")
@@ -211,10 +223,7 @@ def sync_scroll(event):
 def sync_scroll_line(event):
     line_numbers.yview_moveto(editor.yview()[0])
 editor.bind("<MouseWheel>", sync_scroll)
-editmenu.bind("<Button-1>", sync_scroll_line)
 line_numbers.bind("<MouseWheel>", sync_scroll_line)
-
-root.mainloop()
 
 #Theme Implementation
 def change_theme(theme):
@@ -240,14 +249,22 @@ def update_status_bar(event):
 editor.bind("<KeyRelease>", update_status_bar)
 
 #Tab Implementation
-notebook = ttk.Notebook(root)
-notebook.pack(expand=True, fill="both")
 def add_tab():
     new_editor = scrolledtext.ScrolledText(notebook, font=("Courier", 14), wrap=tk.WORD)
     notebook.add(new_editor, text=f"Untitled")
     new_editor.bind("<KeyRelease>", highlight_syntax)
     new_editor.bind("<KeyRelease>", update_line_numbers)
-    new_editor.bind("<MouseWheel>", sync_scroll)
-    new_editor.bind("<Button-1>", sync_scroll_line)
-    new_editor.bind("<KeyRelease>", update_status_bar)
+    new_editor.bind("<MouseWheel>", sync_scroll) #sync new editor scroll
+    new_editor.bind("<Button-1>", sync_scroll_line) #sync new editor scroll
+    new_editor.bind("<KeyRelease>", update_status_bar) #update status bar for new editor
+
 filemenu.add_command(label="New Tab", command=add_tab)
+
+#Placement of editor and console inside notebook
+notebook.add(editor_frame, text="Code Editor")
+notebook.add(console_frame, text="Console")
+line_numbers.pack(in_=editor_frame, side=tk.LEFT, fill=tk.Y) #pack line number
+editor.pack(in_=editor_frame, expand=True, fill="both") #pack editor
+console.pack(in_=console_frame, expand=True, fill="both") #pack console
+
+root.mainloop()
