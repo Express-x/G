@@ -110,10 +110,10 @@
         /* Menu Panel Styles */
         #menu-panel {
             position: fixed;
-            top: 0;
+            top: 10px; /* Changed the top to 10px */
             left: -50%; /* Start off-screen */
-            height: calc(100vh - 30px);
-            width: 35%;
+            height: calc(100vh - 20px);
+            width: 50%;
             background-color: #f0f0f0;
             transition: left 0.3s ease-in-out;
             z-index: 100;
@@ -121,7 +121,6 @@
             box-sizing: border-box;
             border-radius: 10px 0 0 10px;
             box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-            height: 80vh; /* Changed the height to 80vh */
         }
 
         #menu-panel.open {
@@ -174,6 +173,24 @@
         #menu-panel li {
             margin-bottom: 10px;
         }
+
+        #menu-panel .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+        }
+
+        #menu-panel .close-button span {
+            display: block;
+            height: 3px;
+            width: 25px;
+            background-color: #333;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -184,6 +201,11 @@
         <span></span>
     </button>
     <div id="menu-panel">
+        <button class="close-button">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <div class="tab-bar">
             <div class="tab active" data-target="settings">Settings</div>
             <div class="tab" data-target="instructions">System Instructions</div>
@@ -199,9 +221,14 @@
     <script>
         const menuButton = document.getElementById("menu-button");
         const menuPanel = document.getElementById("menu-panel");
+        const closeButton = document.querySelector(".close-button");
 
         menuButton.addEventListener("click", () => {
             menuPanel.classList.toggle("open");
+        });
+
+        closeButton.addEventListener("click", () => {
+            menuPanel.classList.remove("open");
         });
 
         const tabs = document.querySelectorAll(".tab");
