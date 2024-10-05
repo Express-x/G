@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat App</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -khtml-user-select: none; /* Konqueror HTML */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+            -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
+        }
+
+        #chat-history {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            margin-bottom: 5px;
+            padding: 10px;
+            border-radius: 15px;
+            max-width: 50%; /* Limit width to 50% */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            /* Futuristic look */
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .message::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px;
+            border-style: solid;
+            border-color: transparent transparent rgba(255, 255, 255, 0.8) transparent;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: #e0f7fa;
+            /* Bubble tail */
+            .message::before {
+                left: auto;
+                right: 50%;
+                border-color: transparent transparent transparent rgba(255, 255, 255, 0.8);
+            }
+        }
+
+        .assistant-message {
+            align-self: flex-start;
+            background-color: #e0f7fa;
+        }
+
+        #chat-form {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            padding: 10px;
+            display: flex;
+        }
+
+        #message {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .message {
+                max-width: 100%;
+            }
+        }
+
+        /* Prevent zooming */
+        html {
+            -ms-touch-action: manipulation;
+            touch-action: manipulation;
+        }
+
+        /* Prevent selection */
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Menu Panel Styles */
+        #menu-panel {
+            position: fixed;
+            top: 0;
+            left: -50%; /* Start off-screen */
+            height: calc(100vh - 30px);
+            width: 35%;
+            background-color: #f0f0f0;
+            transition: left 0.3s ease-in-out;
+            z-index: 100;
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 10px 0 0 10px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+            height: 80vh; /* Changed the height to 80vh */
+        }
+
+        #menu-panel.open {
+            left: 0;
+        }
+
+        #menu-button {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+        }
+
+        #menu-button span {
+            display: block;
+            height: 3px;
+            width: 25px;
+            background-color: #333;
+            margin-bottom: 5px;
+        }
+
+        /* Tab Bar Styles */
+        #menu-panel .tab-bar {
+            display: flex;
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+        }
+
+        #menu-panel .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        #menu-panel .tab.active {
+            border-bottom-color: #333;
+        }
+
+        #menu-panel ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        #menu-panel li {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat with the AI</h1>
+    <button id="menu-button">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    <div id="menu-panel">
+        <div class="tab-bar">
+            <div class="tab active" data-target="settings">Settings</div>
+            <div class="tab" data-target="instructions">System Instructions</div>
+            <div class="tab" data-target="theme">Theme</div>
+            <div class="tab" data-target="ipex">IPEX</div>
+        </div>
+    </div>
+    <div id="chat-history"></div>
+    <form id="chat-form" method="POST">
+        <input type="text" name="message" placeholder="Enter your message" id="message">
+        <button type="submit">Send</button>
+    </form>
+    <script>
+        const menuButton = document.getElementById("menu-button");
+        const menuPanel = document.getElementById("menu-panel");
+
+        menuButton.addEventListener("click", () => {
+            menuPanel.classList.toggle("open");
+        });
+
+        const tabs = document.querySelectorAll(".tab");
+        const tabContent = document.querySelectorAll("#menu-panel ul li");
+
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                const target = tab.dataset.target;
+                tabs.forEach(t => t.classList.remove("active"));
+                tab.classList.add("active");
+                tabContent.forEach(content => {
+                    if (content.textContent.trim() === target) {
+                        content.style.display = "block";
+                    } else {
+                        content.style.display = "none";
+                    }
+                });
+            });
+        });
+
+        const form = document.getElementById("chat-form");
+        const messageInput = document.getElementById("message");
+        const chatHistory = document.getElementById("chat-history");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const message = messageInput.value;
+            messageInput.value = "";
+
+            const response = await fetch("/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({
+                    message: message,
+                }).toString(),
+            });
+
+            const data = await response.json();
+
+            if (data.response) {
+                chatHistory.innerHTML += `<div class="user-message message"><strong>You:</strong> ${message}</div><div class="assistant-message message"><strong>AI:</strong> ${data.response}</div>`;
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            } else if (data.error) {
+                chatHistory.innerHTML += `<p>Error: ${data.error}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
