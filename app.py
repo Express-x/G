@@ -1,11 +1,16 @@
 from flask import Flask, request, jsonify, render_template
 
 from groq import Groq
+import json
 
 app = Flask(__name__)
 
 # Initialize Groq client with API key
 client = Groq(api_key="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")
+
+# Load system instructions from JSON file
+with open("instruct_and_Ipex_tool.json", "r") as f:
+    system_instructions = json.load(f)
 
 @app.route("/", methods=["GET", "POST"])
 def chat():
@@ -26,7 +31,7 @@ def generate_response(user_input):
         messages=[
             {
                 "role": "system",
-                "content": "you are a helpful assistant.",
+                "content": system_instructions["system_instructions"],
             },
             {
                 "role": "user",

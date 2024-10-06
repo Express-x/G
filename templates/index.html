@@ -54,7 +54,6 @@
 
         .user-message {
             align-self: flex-end;
-            background-color: #e0f7fa;
             /* Bubble tail */
             .message::before {
                 left: auto;
@@ -65,7 +64,6 @@
 
         .assistant-message {
             align-self: flex-start;
-            background-color: #e0f7fa;
         }
 
         #chat-form {
@@ -111,10 +109,10 @@
         #menu-panel {
             position: fixed;
             top: 10px; /* Changed the top to 10px */
-            left: -50%; /* Start off-screen */
-            height: calc(100vh - 20px);
+            left: -80%; /* Start off-screen */
+            height: calc(100vh - 70px);
             width: 50%;
-            background-color: #f0f0f0;
+            background-color: #D6C2A7; /* Set background color for menu panel */
             transition: left 0.3s ease-in-out;
             z-index: 100;
             padding: 20px;
@@ -151,6 +149,7 @@
             position: absolute;
             bottom: 20px;
             width: 100%;
+            background-color: #D6C2A7; /* Set background color for tab bar */
         }
 
         #menu-panel .tab {
@@ -191,6 +190,203 @@
             background-color: #333;
             margin-bottom: 5px;
         }
+
+        /* Theme Selection Styles */
+        #theme-selection {
+            display: none;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            position: fixed;
+            top: 50%;
+            left: calc(50% - 180px);
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            width: 300px;
+        }
+
+        #theme-selection label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        #theme-selection input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        /* Light Theme Styles */
+        body.light-theme #chat-history {
+            background-color: #D6C2A7; /* Set background color for chat history */
+        }
+
+        body.light-theme .message {
+            background-color: #e0f7fa;
+        }
+
+        body.light-theme .user-message {
+            background-color: #A52A2A; /* Set background color for user messages */
+        }
+
+        body.light-theme .assistant-message {
+            background-color: #6495ED; /* Set background color for AI messages */
+        }
+
+        body.light-theme #menu-panel {
+            background-color: #D6C2A7; /* Set background color for menu panel */
+        }
+
+        body.light-theme #menu-panel .tab-bar {
+            background-color: #D6C2A7; /* Set background color for tab bar */
+        }
+
+        body.light-theme #menu-panel .tab {
+            color: #228B22;
+        }
+
+        body.light-theme #menu-panel .tab.active {
+            border-bottom-color: #228B22;
+        }
+
+        body.light-theme #menu-panel .close-button span {
+            background-color: #228B22;
+        }
+
+        body.light-theme h1 {
+            color: #228B22;
+        }
+
+        body.light-theme .message {
+            color: #333;
+        }
+
+        body.light-theme .user-message strong {
+            color: #333;
+        }
+
+        body.light-theme .assistant-message strong {
+            color: #333;
+        }
+
+        body.light-theme #menu-panel .tab {
+            color: #228B22;
+        }
+
+        body.light-theme #menu-panel .tab.active {
+            border-bottom-color: #228B22;
+        }
+
+        body.light-theme .user-message {
+            background-color: #A52A2A;
+        }
+
+        body.light-theme .user-message {
+            color: #fff;
+        }
+
+        body.light-theme .user-message strong {
+            color: #4D1050; /* Set text color for user messages */
+        }
+
+        body.light-theme .assistant-message strong {
+            color: #105040; /* Set text color for AI messages */
+        }
+
+        /* Dark Theme Styles */
+        body.dark-theme #chat-history {
+            background-color: #222;
+            color: #fff;
+        }
+
+        body.dark-theme .message {
+            background-color: #333;
+            color: #fff;
+        }
+
+        body.dark-theme .user-message {
+            background-color: #333;
+            color: #fff;
+        }
+
+        body.dark-theme .assistant-message {
+            background-color: #222;
+            color: #fff;
+        }
+
+        body.dark-theme #menu-panel {
+            background-color: #222;
+        }
+
+        body.dark-theme #menu-panel .tab-bar {
+            background-color: #555;
+        }
+
+        body.dark-theme #menu-panel .tab {
+            color: #fff;
+        }
+
+        body.dark-theme #menu-panel .tab.active {
+            border-bottom-color: #fff;
+        }
+
+        body.dark-theme #menu-panel .close-button span {
+            background-color: #fff;
+        }
+
+        body.dark-theme h1 {
+            color: #fff;
+        }
+
+        body.dark-theme .message {
+            color: #fff;
+        }
+
+        body.dark-theme .user-message strong {
+            color: #fff;
+        }
+
+        body.dark-theme .assistant-message strong {
+            color: #fff;
+        }
+
+        body.dark-theme #menu-panel .tab {
+            color: #fff;
+        }
+
+        body.dark-theme #menu-panel .tab.active {
+            border-bottom-color: #fff;
+        }
+
+        body.dark-theme #menu-panel {
+            background-color: #222;
+        }
+
+        body.dark-theme #menu-panel .tab {
+            color: #fff;
+        }
+
+        body.dark-theme #menu-panel .tab.active {
+            border-bottom-color: #fff;
+        }
+
+        body.dark-theme #menu-panel .close-button span {
+            background-color: #fff;
+        }
+
+        body.dark-theme .user-message {
+            background-color: #8B0000;
+        }
+
+        body.dark-theme .assistant-message {
+            background-color: #4169E1;
+        }
+
+        #theme-selection {
+            left: calc(50% - 180px);
+        }
+
+        #menu-panel.open #theme-selection {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -212,6 +408,17 @@
             <div class="tab" data-target="theme">Theme</div>
             <div class="tab" data-target="ipex">IPEX</div>
         </div>
+        <ul>
+            <li style="display: block;" id="settings">Settings Content</li>
+            <li style="display: none;" id="instructions">System Instructions Content</li>
+            <li style="display: none;" id="theme">
+                <div id="theme-selection">
+                    <label><input type="radio" name="theme" value="light" checked>Light</label>
+                    <label><input type="radio" name="theme" value="dark">Dark</label>
+                </div>
+            </li>
+            <li style="display: none;" id="ipex">IPEX Content</li>
+        </ul>
     </div>
     <div id="chat-history"></div>
     <form id="chat-form" method="POST">
@@ -240,7 +447,7 @@
                 tabs.forEach(t => t.classList.remove("active"));
                 tab.classList.add("active");
                 tabContent.forEach(content => {
-                    if (content.textContent.trim() === target) {
+                    if (content.id === target) {
                         content.style.display = "block";
                     } else {
                         content.style.display = "none";
@@ -276,6 +483,25 @@
             } else if (data.error) {
                 chatHistory.innerHTML += `<p>Error: ${data.error}</p>`;
             }
+        });
+
+        const themeRadios = document.querySelectorAll("#theme-selection input[type='radio']");
+        themeRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                const selectedTheme = radio.value;
+                document.body.classList.remove('light-theme', 'dark-theme');
+                document.body.classList.add(`${selectedTheme}-theme`);
+            });
+        });
+
+        // Ensure the theme is applied on page load
+        const initialTheme = document.querySelector("#theme-selection input[type='radio']:checked").value;
+        document.body.classList.add(`${initialTheme}-theme`);
+
+        const themeTab = document.querySelector(".tab[data-target='theme']");
+        themeTab.addEventListener("click", () => {
+            const themeSelection = document.getElementById("theme-selection");
+            themeSelection.style.display = "block";
         });
     </script>
 </body>
