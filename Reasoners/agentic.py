@@ -1,5 +1,6 @@
 import asyncio
 import json
+from groq import AsyncGroq # Added import statement
 from Reasoners.models import process_tasks, chat_completion_async, handle_chat_instance #Import necessary functions
 
 # Initialize the Groq client with the API key
